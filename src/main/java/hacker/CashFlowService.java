@@ -33,7 +33,8 @@ public class CashFlowService {
 //                try {
 //                    startSignal.await();
 //                    new RawDLXMLFileProcessor(cashFlow).parse();
-                new SaxParser(cashFlow).parse();
+//                new SaxParser(cashFlow).parse();
+                new StaxParser(cashFlow).parse();
 //                    doneSignal.countDown();
 //                } catch (InterruptedException e) {
 //                    e.printStackTrace();

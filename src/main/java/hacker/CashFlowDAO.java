@@ -139,13 +139,13 @@ public class CashFlowDAO {
                     finalPreparedStatement.setString(1, cashFlow.getBankName());
                     finalPreparedStatement.setString(2, null == cashFlow.getCashFlow() ? "0" : cashFlow.getCashFlow().toString());
                     finalPreparedStatement.setString(3, cashFlow.getKey());
-                    finalPreparedStatement.addBatch();
+                    finalPreparedStatement.executeUpdate();
+//                    finalPreparedStatement.addBatch();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
 
             });
-            preparedStatement.executeBatch();
             connection.commit();
             preparedStatement.close();
         } catch (SQLException e) {
