@@ -2,10 +2,8 @@ package hacker;
 
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -25,17 +23,30 @@ public class CashFlowService {
     public String process(List<String> keys) {
         LocalTime startTime = LocalTime.now();
         List<CashFlow> cashFlows = cashFlowDAO.getCashFlowEntities(keys);
-        CountDownLatch startSignal = new CountDownLatch(1);
-        CountDownLatch doneSignal = new CountDownLatch(cashFlows.size());
+        CountDownLatch startSignalAmount = new CountDownLatch(1);
+        CountDownLatch doneSignalAmount = new CountDownLatch(cashFlows.size());
+        CountDownLatch startSignalRoutinNumber = new CountDownLatch(1);
+        CountDownLatch doneSignalRoutinNumber = new CountDownLatch(cashFlows.size());
 //        List<Future<CashFlow>> futures = new ArrayList<>();
         for (CashFlow cashFlow : cashFlows) {
             ExecutorHelper.execute(() -> {
                 try {
-                    startSignal.await();
+                    startSignalAmount.await();
 //                    new RawDLXMLFileProcessor(cashFlow).parse();
 //                new SaxParser(cashFlow).parse();
-                    new StaxParser(cashFlow).parse();
-                    doneSignal.countDown();
+                    new StaxParserAmount(cashFlow).parse();
+                    doneSignalAmount.countDown();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+            ExecutorHelper.execute(() -> {
+                try {
+                    startSignalRoutinNumber.await();
+//                    new RawDLXMLFileProcessor(cashFlow).parse();
+//                new SaxParser(cashFlow).parse();
+                    new StaxParserRoutingNum(cashFlow).parse();
+                    doneSignalRoutinNumber.countDown();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -43,9 +54,16 @@ public class CashFlowService {
         }
 //        executorService.shutdown();
 
-        startSignal.countDown();
+        startSignalAmount.countDown();
         try {
-            doneSignal.await();
+            doneSignalAmount.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        startSignalRoutinNumber.countDown();
+        try {
+            doneSignalRoutinNumber.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -102,7 +120,7 @@ public class CashFlowService {
 
     public Future<String> findBankName(String routingNumber, CashFlow cashFlow) {
 //        Future<String> bankNameFuture =  ExecutorHelper.submit(() -> {
-        ExecutorHelper.execute(() -> {
+//        ExecutorHelper.execute(() -> {
             LocalTime startTime = LocalTime.now();
 //            String bankName = JDKHttpClientHelper.getInstance().getBankName(routingNumber);
             String bankName = OkHttpClientHelper.getInstance().getBankName(routingNumber);
@@ -111,7 +129,7 @@ public class CashFlowService {
             System.out.println("Bank API Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
 //            return bankName;
 //            Thread.yield();
-        });
+//        });
 //        return bankNameFuture;
         return null;
     }
