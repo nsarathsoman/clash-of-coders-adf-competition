@@ -30,25 +30,25 @@ public class CashFlowService {
 //        List<Future<CashFlow>> futures = new ArrayList<>();
         for (CashFlow cashFlow : cashFlows) {
             ExecutorHelper.execute(() -> {
-//                try {
-//                    startSignal.await();
+                try {
+                    startSignal.await();
 //                    new RawDLXMLFileProcessor(cashFlow).parse();
 //                new SaxParser(cashFlow).parse();
-                new StaxParser(cashFlow).parse();
-//                    doneSignal.countDown();
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
+                    new StaxParser(cashFlow).parse();
+                    doneSignal.countDown();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             });
         }
 //        executorService.shutdown();
 
-//        startSignal.countDown();
-//        try {
-//            doneSignal.await();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        startSignal.countDown();
+        try {
+            doneSignal.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 //        futures.forEach(future -> {
 //            try {
 //                future.get();
@@ -62,7 +62,8 @@ public class CashFlowService {
         LocalTime bankNameRecievedTIme = LocalTime.now();
         while(!cashFlows.stream().allMatch(cashFlow -> cashFlow.isRecievedbankName() )){
             try {
-                Thread.sleep(0, 100);
+//                Thread.sleep(0, 500000);
+                Thread.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -70,15 +71,16 @@ public class CashFlowService {
 
         System.out.println("BankNameRecieved Check Time : " + ChronoUnit.MILLIS.between(bankNameRecievedTIme, LocalTime.now())+ "ms");
 
-        LocalTime cashFlowTime = LocalTime.now();
-        while(!cashFlows.stream().allMatch(cashFlow -> cashFlow.isCashFlowAdded() )){
-            try {
-                Thread.sleep(0, 100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("CashFlow Check Time : " + ChronoUnit.MILLIS.between(cashFlowTime, LocalTime.now())+ "ms");
+//        LocalTime cashFlowTime = LocalTime.now();
+//        while(!cashFlows.stream().allMatch(cashFlow -> cashFlow.isCashFlowAdded() )){
+//            try {
+////                Thread.sleep(0, 500000);
+//                Thread.sleep(1);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        System.out.println("CashFlow Check Time : " + ChronoUnit.MILLIS.between(cashFlowTime, LocalTime.now())+ "ms");
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("[");
         int size = cashFlows.size() -1 ;

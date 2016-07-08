@@ -68,7 +68,7 @@ public class StaxParser {
                 event = xmlStreamReader.next();
             }
 
-            cashFlow.setCashFlow(Math.round(cashFlowAmount));
+            cashFlow.setCashFlow((int) (cashFlowAmount + 0.5f));
             cashFlow.setCashFlowAdded(true);
         } catch (XMLStreamException e) {
             e.printStackTrace();
@@ -85,4 +85,13 @@ public class StaxParser {
         System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
     }
 
+
+    public int round(float num) {
+
+        if (num > 0) {
+            return (int) (num + 0.5d);
+        } else {
+            return (int) (num - 0.5d);
+        }
+    }
 }
