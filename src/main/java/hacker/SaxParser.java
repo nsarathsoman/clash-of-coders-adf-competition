@@ -66,7 +66,7 @@ public class SaxParser {
             };
 
             saxParser.parse(cashFlow.getDlFileName(), handler);
-            cashFlow.setCashFlow(cashFlowAmount);
+            cashFlow.setCashFlow(Math.round(cashFlowAmount));
             cashFlow.setCashFlowAdded(true);
         } catch (Exception e) {
             e.printStackTrace();

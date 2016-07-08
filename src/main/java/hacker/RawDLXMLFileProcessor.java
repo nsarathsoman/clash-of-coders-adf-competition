@@ -34,7 +34,7 @@ public class RawDLXMLFileProcessor {
                     }
                 }
             }
-            cashFlow.setCashFlow(cashFlowAmount);
+            cashFlow.setCashFlow(Math.round(cashFlowAmount));
             cashFlow.setCashFlowAdded(true);
 //            Thread.yield();
         } catch (java.io.IOException e) {
