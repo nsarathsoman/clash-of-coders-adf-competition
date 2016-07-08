@@ -86,7 +86,7 @@ public class CashFlowDAO {
         try(Connection connection = dataSource.getConnection()){
             String query = "update " + TABLE + " set "+ CASH_FLOW +"=? where `key` = ?;";
             preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, cashFlow.getCashFlow().toString());
+            preparedStatement.setString(1, String.valueOf(cashFlow.getCashFlow()));
             preparedStatement.setString(2, cashFlow.getKey());
             preparedStatement.executeUpdate();
             preparedStatement.close();
@@ -137,7 +137,7 @@ public class CashFlowDAO {
             cashFlows.forEach(cashFlow -> {
                 try {
                     finalPreparedStatement.setString(1, cashFlow.getBankName());
-                    finalPreparedStatement.setString(2, null == cashFlow.getCashFlow() ? "0" : cashFlow.getCashFlow().toString());
+                    finalPreparedStatement.setString(2, String.valueOf(cashFlow.getCashFlow()));
                     finalPreparedStatement.setString(3, cashFlow.getKey());
                     finalPreparedStatement.executeUpdate();
 //                    finalPreparedStatement.addBatch();

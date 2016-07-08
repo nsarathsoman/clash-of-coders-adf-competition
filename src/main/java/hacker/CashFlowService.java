@@ -62,7 +62,7 @@ public class CashFlowService {
         LocalTime bankNameRecievedTIme = LocalTime.now();
         while(!cashFlows.stream().allMatch(cashFlow -> cashFlow.isRecievedbankName() )){
             try {
-                Thread.sleep(1);
+                Thread.sleep(0, 100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -73,7 +73,7 @@ public class CashFlowService {
         LocalTime cashFlowTime = LocalTime.now();
         while(!cashFlows.stream().allMatch(cashFlow -> cashFlow.isCashFlowAdded() )){
             try {
-                Thread.sleep(1);
+                Thread.sleep(0, 100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

@@ -68,7 +68,7 @@ public class StaxParser {
                 event = xmlStreamReader.next();
             }
 
-            cashFlow.setCashFlow(cashFlowAmount);
+            cashFlow.setCashFlow(Math.round(cashFlowAmount));
             cashFlow.setCashFlowAdded(true);
         } catch (XMLStreamException e) {
             e.printStackTrace();

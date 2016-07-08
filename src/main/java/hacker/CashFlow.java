@@ -7,7 +7,7 @@ public class CashFlow {
 
     private String key;
     private String dlFileName;
-    private Float cashFlow;
+    private int cashFlow;
     private boolean cashFlowAdded;
     private String bankName;
     private String routingNumber;
@@ -29,11 +29,11 @@ public class CashFlow {
         this.dlFileName = dlFileName;
     }
 
-    public Float getCashFlow() {
+    public int getCashFlow() {
         return cashFlow;
     }
 
-    public void setCashFlow(Float cashFlow) {
+    public void setCashFlow(int cashFlow) {
         this.cashFlow = cashFlow;
     }
 
@@ -99,7 +99,7 @@ public class CashFlow {
             return this;
         }
 
-        public CashFlowBuilder withCashFlow(Float cashFlo) {
+        public CashFlowBuilder withCashFlow(int cashFlo) {
             cashFlow.setCashFlow(cashFlo);
             return this;
         }
