@@ -98,7 +98,8 @@ public class OkHttpClientHelper {
                 }
             });
 
-            OkHttpClient okHttpClient = builder.connectionPool(new ConnectionPool(20, 10L, TimeUnit.MINUTES)).build();
+//            OkHttpClient okHttpClient = builder.connectionPool(new ConnectionPool(50, 10L, TimeUnit.MINUTES)).build();
+            OkHttpClient okHttpClient = builder.connectionPool(new ConnectionPool()).build();
             return okHttpClient;
         } catch (Exception e) {
             throw new RuntimeException(e);
