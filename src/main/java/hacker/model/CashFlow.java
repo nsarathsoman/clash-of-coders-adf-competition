@@ -1,4 +1,4 @@
-package hacker;
+package hacker.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -87,7 +87,7 @@ public class CashFlow {
     public static final class CashFlowBuilder {
         private final CashFlow cashFlow;
 
-        public static CashFlowBuilder builder() {
+        public static CashFlowBuilder build() {
             return new CashFlowBuilder(new CashFlow());
         }
 
@@ -115,7 +115,7 @@ public class CashFlow {
             return this;
         }
 
-        public  CashFlow build(){
+        public  CashFlow done(){
             return cashFlow;
         }
 

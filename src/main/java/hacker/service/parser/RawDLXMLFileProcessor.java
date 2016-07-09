@@ -95,7 +95,7 @@
 //    public static void main(String[] args) {
 //        for(int i = 0; i< 5; i++) {
 //            LocalTime startTime = LocalTime.now();
-//            CashFlow cashFlow = CashFlow.CashFlowBuilder.builder().withDLFileName("/home/sarath/Downloads/DLxml_3_amount check.xml").build();
+//            CashFlow cashFlow = CashFlow.CashFlowBuilder.build().withDLFileName("/home/sarath/Downloads/DLxml_3_amount check.xml").done();
 //            new RawDLXMLFileProcessor(cashFlow).parse();
 //            System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
 //        }

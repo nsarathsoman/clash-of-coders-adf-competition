@@ -1,4 +1,4 @@
-package hacker;
+package hacker.service.parser;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -11,27 +11,31 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import hacker.model.CashFlow;
+import hacker.service.BankNameService;
 
-public class StaxParser {
 
-    private final String filePath;
-    private final CashFlow cashFlow;
-    private float cashFlowAmount = 0f;
-    private RecursiveTask<String> bankNameAction;
+public class DLXMLParser {
 
-    public StaxParser(CashFlow cashFlow) {
-        this.cashFlow = cashFlow;
-        this.filePath = cashFlow.getDlFileName();
+    private static final DLXMLParser DLXML_PARSER = new DLXMLParser();
+
+    private DLXMLParser() {}
+
+    public static DLXMLParser getInstance() {
+        return DLXML_PARSER;
     }
 
-    public CashFlow parse() {
+    public CashFlow parse(final CashFlow cashFlow) {
+        final String filePath = cashFlow.getDlFileName();;
+        float cashFlowAmount = 0f;
+        RecursiveTask<String> bankNameAction = null;
         LocalTime startTime = LocalTime.now();
         boolean amount = false;
         boolean routingNumberEntered = false;
         boolean routingNumberRead = false;
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         try {
-            XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(new FileReader(cashFlow.getDlFileName()));
+            XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(new FileReader(filePath));
             int event = xmlStreamReader.getEventType();
             while (true) {
                 switch (event){
@@ -54,8 +58,7 @@ public class StaxParser {
                             bankNameAction = new RecursiveTask<String>() {
                                 @Override
                                 protected String compute() {
-//                                    cashFlow.setBankName("sas");
-                                    return CashFlowService.getInstance().findBankName(routingNumber, cashFlow);
+                                    return BankNameService.getInstance().findBankName(routingNumber);
                                 }
                             };
                             bankNameAction.fork();
@@ -73,10 +76,11 @@ public class StaxParser {
                 event = xmlStreamReader.next();
             }
 
-//            cashFlow.setCashFlow((int) (cashFlowAmount + 0.5f));
-//            cashFlow.setCashFlowAdded(true);
-//            bankNameAction.join();
-            return CashFlow.CashFlowBuilder.builder().withKey(cashFlow.getKey()).withCashFlow((int) (cashFlowAmount + 0.5f)).withBankName(bankNameAction.join()).build();
+            return CashFlow.CashFlowBuilder.build()
+                    .withKey(cashFlow.getKey())
+                    .withCashFlow((int) (cashFlowAmount + 0.5f))
+                    .withBankName(bankNameAction.join())
+                    .done();
         } catch (XMLStreamException e) {
             e.printStackTrace();
         } catch (FileNotFoundException e) {
@@ -86,12 +90,12 @@ public class StaxParser {
         return null;
     }
 
-    public static void main(String[] args) {
-        LocalTime startTime = LocalTime.now();
-        CashFlow cashFlow = CashFlow.CashFlowBuilder.builder().withDLFileName("/home/sarath/Downloads/dlxmlCashFlowMonthlyOne-VE(1).xml").build();
-        new StaxParser(cashFlow).parse();
-        System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
-    }
+//    public static void main(String[] args) {
+//        LocalTime startTime = LocalTime.now();
+//        CashFlow cashFlow = CashFlow.CashFlowBuilder.build().withDLFileName("/home/sarath/Downloads/dlxmlCashFlowMonthlyOne-VE(1).xml").done();
+//        new DLXMLParser(cashFlow).parse();
+//        System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
+//    }
 
 
     public int round(float num) {

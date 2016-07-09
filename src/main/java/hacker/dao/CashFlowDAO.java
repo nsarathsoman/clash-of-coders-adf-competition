@@ -1,4 +1,4 @@
-package hacker;
+package hacker.dao;
 
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -9,8 +9,12 @@ import java.sql.SQLException;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import hacker.model.CashFlow;
+import hacker.UndertowServer;
 
 /**
  * Created by sarath on 7/4/16.
@@ -22,7 +26,7 @@ public class CashFlowDAO {
     private static final String DL_FILE_NAME = "dl_file_name";
     private static final String CASH_FLOW = "cash_flow";
     private static final String BANK_NAME = "bank_name";
-    private static final HikariDataSource dataSource = UndertowServer.hikariDataSource;
+    private static final HikariDataSource dataSource = UndertowServer.HIKARI;
 
     private static final CashFlowDAO cashFlowDAO = new CashFlowDAO();
 
@@ -54,8 +58,13 @@ public class CashFlowDAO {
             preparedStatement = connection.prepareStatement(query);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                CashFlow.CashFlowBuilder cashFlowBuilder = CashFlow.CashFlowBuilder.builder();
-                cashFlows.add(cashFlowBuilder.withDLFileName(resultSet.getString(DL_FILE_NAME)).withKey(resultSet.getString(KEY)).build());
+                cashFlows.add(
+                        CashFlow.CashFlowBuilder
+                                .build()
+                                .withDLFileName(resultSet.getString(DL_FILE_NAME))
+                                .withKey(resultSet.getString(KEY))
+                                .done()
+                );
             }
             resultSet.close();
             preparedStatement.close();
@@ -126,28 +135,30 @@ public class CashFlowDAO {
         System.out.println("Persist BankName Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
     }
 
-    public void updateBankNameAndCashFlow(List<CashFlow> cashFlows) {
+    public void updateBankNameAndCashFlow(Collection<CashFlow> cashFlows) {
         LocalTime startTime = LocalTime.now();
+        cashFlows.parallelStream().forEach((cashFlow)-> updateBankNameAndCashFlow(cashFlow));
+        System.out.println("Persist BankName and CashFlow Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
+    }
+
+    public void updateBankNameAndCashFlow(final CashFlow cashFlow) {
         PreparedStatement preparedStatement = null;
         try (Connection connection = dataSource.getConnection()) {
-            connection.setAutoCommit(false);
+//            connection.setAutoCommit(false);
             String query = "update " + TABLE + " set " + BANK_NAME + "=?, " + CASH_FLOW + "=? where `key` = ?;";
             preparedStatement = connection.prepareStatement(query);
-            PreparedStatement finalPreparedStatement = preparedStatement;
-            cashFlows.forEach(cashFlow -> {
 //                System.out.println("Persiting cashflow :" + cashFlow.getCashFlow() + " " + cashFlow.getBankName());
-                try {
-                    finalPreparedStatement.setString(1, cashFlow.getBankName());
-                    finalPreparedStatement.setString(2, String.valueOf(cashFlow.getCashFlow()));
-                    finalPreparedStatement.setString(3, cashFlow.getKey());
-//                    finalPreparedStatement.executeUpdate();
-                    finalPreparedStatement.addBatch();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            });
-            preparedStatement.executeBatch();
-            connection.commit();
+            try {
+                preparedStatement.setString(1, cashFlow.getBankName());
+                preparedStatement.setString(2, String.valueOf(cashFlow.getCashFlow()));
+                preparedStatement.setString(3, cashFlow.getKey());
+                preparedStatement.executeUpdate();
+//                            finalPreparedStatement.addBatch();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+//                        finalPreparedStatement.executeBatch();
+//            connection.commit();
             preparedStatement.close();
         } catch (SQLException e) {
             if (null != preparedStatement) {
@@ -159,6 +170,5 @@ public class CashFlowDAO {
             }
             e.printStackTrace();
         }
-        System.out.println("Persist BankName and CashFlow Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
     }
 }

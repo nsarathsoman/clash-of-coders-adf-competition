@@ -6,9 +6,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
+import hacker.service.CashFlowService;
+import hacker.service.http.OkHttpClientHelper;
 import io.undertow.Undertow;
 import io.undertow.util.Headers;
 
@@ -17,39 +18,28 @@ import io.undertow.util.Headers;
  */
 public class UndertowServer {
 
-    private static HikariConfig config;
-    public static HikariDataSource hikariDataSource;
+    public static String BANK_NAME_API = null;
+    public static HikariDataSource HIKARI;
     private static ForkJoinPool forkJoinPool = new ForkJoinPool();
 
     public static void main(final String[] args) {
-        config = new HikariConfig();
+        HikariConfig config = new HikariConfig();
         config.setJdbcUrl(args[0]);
         config.setUsername(args[1]);
         config.setPassword(args[2]);
         config.setMinimumIdle(100);
         config.setMaximumPoolSize(100);
-        hikariDataSource = new HikariDataSource(config);
+        HIKARI = new HikariDataSource(config);
+        BANK_NAME_API = args[3];
 
 //        System.setProperty("http.keepAlive", "true");
 //        System.setProperty("http.maxConnections", "50");
 
-//        ExecutorHelper.execute(() -> {
-//            JDKHttpClientHelper.getInstance().getBankName(CashFlow.CashFlowBuilder.builder().withRoutingNumber("12346").build());
-//            JDKHttpClientHelper.getInstance().getBankName(CashFlow.CashFlowBuilder.builder().withRoutingNumber("12347").build());
-//            JDKHttpClientHelper.getInstance().getBankName(CashFlow.CashFlowBuilder.builder().withRoutingNumber("12348").build());
-//            JDKHttpClientHelper.getInstance().getBankName(CashFlow.CashFlowBuilder.builder().withRoutingNumber("12349").build());
-
-//            OkHttpClientHelper.getInstance().getBankName(CashFlow.CashFlowBuilder.builder().withRoutingNumber("12345").build());
-//            OkHttpClientHelper.getInstance().getBankName(CashFlow.CashFlowBuilder.builder().withRoutingNumber("12346").build());
-//            OkHttpClientHelper.getInstance().getBankName(CashFlow.CashFlowBuilder.builder().withRoutingNumber("12347").build());
-//            OkHttpClientHelper.getInstance().getBankName(CashFlow.CashFlowBuilder.builder().withRoutingNumber("12348").build());
-
-//        });
-
+        OkHttpClientHelper.getInstance().getBankName("12348");
         Undertow server = Undertow.builder()
-                .addHttpListener(8888, args[3])
+                .addHttpListener(Integer.parseInt(args[4]), args[5])
                 .setHandler((exchange) -> {
-                    Deque<String> keys = exchange.getQueryParameters().get("key");
+                    final Deque<String> keys = exchange.getQueryParameters().get("key");
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                     String resp = forkJoinPool.invoke(new RecursiveTask<String>() {
                         @Override

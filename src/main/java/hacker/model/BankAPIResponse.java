@@ -1,4 +1,4 @@
-package hacker;
+package hacker.model;
 
 /**
  * Created by sarath on 7/6/16.

@@ -76,7 +76,7 @@
 //
 //    public static void main(String[] args) {
 //        LocalTime startTime = LocalTime.now();
-//        CashFlow cashFlow = CashFlow.CashFlowBuilder.builder().withDLFileName("/home/sarath/Downloads/dlxmlCashFlowMonthlyOne-VE(1).xml").build();
+//        CashFlow cashFlow = CashFlow.CashFlowBuilder.build().withDLFileName("/home/sarath/Downloads/dlxmlCashFlowMonthlyOne-VE(1).xml").done();
 //        new SaxParser(cashFlow).parse();
 //        System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
 //    }

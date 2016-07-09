@@ -1,30 +1,25 @@
-package hacker;
+package hacker.service.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.Temporal;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import hacker.model.BankAPIResponse;
+import hacker.model.CashFlow;
+import hacker.UndertowServer;
 import okhttp3.ConnectionPool;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -53,7 +48,7 @@ public class OkHttpClientHelper {
 
     public String getBankName(String routingNumber) {
         Request request = new Request.Builder()
-                .url("https://www.dev-ui1.adfdata.net/hacker/bank/" + routingNumber)
+                .url(UndertowServer.BANK_NAME_API + routingNumber)
                 .build();
 
         InputStream inputStream = null;
@@ -127,7 +122,7 @@ public class OkHttpClientHelper {
                 }
             });
 
-//            OkHttpClient okHttpClient = builder.connectionPool(new ConnectionPool(50, 10L, TimeUnit.MINUTES)).build();
+//            OkHttpClient okHttpClient = build.connectionPool(new ConnectionPool(50, 10L, TimeUnit.MINUTES)).done();
             OkHttpClient okHttpClient = builder.connectionPool(new ConnectionPool()).build();
             return okHttpClient;
         } catch (Exception e) {
