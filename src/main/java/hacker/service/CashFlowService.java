@@ -4,6 +4,7 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
@@ -30,8 +31,8 @@ public class CashFlowService {
         final List<ForkJoinTask<CashFlow>> forkJoinTasks = new ArrayList<>();
         LocalTime startTime = LocalTime.now();
         System.out.println("Processing " + keys.toString());
-        List<CashFlow> cashFlows = cashFlowDAO.getCashFlowEntities(keys);
-        for (CashFlow cashFlow : cashFlows) {
+        List<CashFlow> cashFlows = findCashFlows(keys);
+        cashFlows.forEach(cashFlow -> {
             RecursiveTask<CashFlow> cashFlowRecursiveTask = new RecursiveTask<CashFlow>() {
                 @Override
                 protected CashFlow compute() {
@@ -40,7 +41,8 @@ public class CashFlowService {
             };
             forkJoinTasks.add(cashFlowRecursiveTask);
             cashFlowRecursiveTask.fork();
-        }
+        });
+
         final List<CashFlow> cashFlowResults = new ArrayList<>();
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("[");
@@ -62,6 +64,14 @@ public class CashFlowService {
              CashFlowDAO.getInstance().updateBankNameAndCashFlow(cashFlowResults);
         });
         return stringBuilder.toString();
+    }
+
+    private List<CashFlow> findCashFlows(List<String> keys) {
+        List<CashFlow> cashFlows = new ArrayList<>();
+        Map<String, CashFlow> cashFlowMap = cashFlowDAO.getCashFlowMap();
+        keys.forEach((key) -> cashFlows.add(cashFlowMap.get(key)));
+        return cashFlows;
+//        return cashFlowDAO.getCashFlows(keys);
     }
 
 }

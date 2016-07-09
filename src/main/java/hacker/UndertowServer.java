@@ -8,6 +8,7 @@ import java.util.Deque;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
+import hacker.dao.CashFlowDAO;
 import hacker.helper.ExecutorHelper;
 import hacker.service.CashFlowService;
 import hacker.service.http.OkHttpClientHelper;
@@ -55,6 +56,8 @@ public class UndertowServer {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             ExecutorHelper.onJVMShutdown();
         }));
+
+        CashFlowDAO.getInstance().initCashFlowMap();
 
     }
 }

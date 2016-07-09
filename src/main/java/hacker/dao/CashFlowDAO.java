@@ -10,8 +10,10 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import hacker.model.CashFlow;
 import hacker.UndertowServer;
@@ -29,6 +31,7 @@ public class CashFlowDAO {
     private static final HikariDataSource dataSource = UndertowServer.HIKARI;
 
     private static final CashFlowDAO cashFlowDAO = new CashFlowDAO();
+    private static Map<String, CashFlow> cashFlowMap;
 
     public static CashFlowDAO getInstance() {
         return cashFlowDAO;
@@ -36,7 +39,7 @@ public class CashFlowDAO {
 
     private CashFlowDAO(){}
 
-    public List<CashFlow> getCashFlowEntities(List<String> keys) {
+    public List<CashFlow> getCashFlows(List<String> keys) {
         LocalTime startTime = LocalTime.now();
         List<CashFlow> cashFlows = new ArrayList<>();
         PreparedStatement preparedStatement = null;
@@ -137,7 +140,7 @@ public class CashFlowDAO {
 
     public void updateBankNameAndCashFlow(Collection<CashFlow> cashFlows) {
         LocalTime startTime = LocalTime.now();
-        cashFlows.parallelStream().forEach((cashFlow)-> updateBankNameAndCashFlow(cashFlow));
+        cashFlows.forEach((cashFlow)-> updateBankNameAndCashFlow(cashFlow));
         System.out.println("Persist BankName and CashFlow Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
     }
 
@@ -170,5 +173,54 @@ public class CashFlowDAO {
             }
             e.printStackTrace();
         }
+    }
+
+    public Map<String, CashFlow> loadCashFlowMap() {
+        Map<String, CashFlow> cashFlowsMap = new HashMap<>();
+        LocalTime startTime = LocalTime.now();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try(Connection connection = dataSource.getConnection()){
+            String query = "select `" + DL_FILE_NAME + "`, `"+KEY+"` from " + TABLE + ";";
+            preparedStatement = connection.prepareStatement(query);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                final String key = resultSet.getString(KEY);
+                cashFlowsMap.put(key, CashFlow.CashFlowBuilder
+                        .build()
+                        .withDLFileName(resultSet.getString(DL_FILE_NAME))
+                        .withKey(key)
+                        .done());
+
+            }
+            resultSet.close();
+            preparedStatement.close();
+        } catch (SQLException e) {
+            if(null != resultSet) {
+                try {
+                    resultSet.close();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            if(null != preparedStatement) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+        }
+        System.out.println("FetchAll Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
+        return cashFlowsMap;
+    }
+
+    public void initCashFlowMap() {
+       cashFlowMap = loadCashFlowMap();
+    }
+
+    public Map<String, CashFlow> getCashFlowMap() {
+        return cashFlowMap;
     }
 }

@@ -28,6 +28,7 @@ public class DLXMLParser {
     public CashFlow parse(final CashFlow cashFlow) {
         final String filePath = cashFlow.getDlFileName();;
         float cashFlowAmount = 0f;
+        String routingNumber = null;
         RecursiveTask<String> bankNameAction = null;
         LocalTime startTime = LocalTime.now();
         boolean amount = false;
@@ -54,14 +55,7 @@ public class DLXMLParser {
                             amount = false;
                         }
                         if (routingNumberEntered) {
-                            final String routingNumber = xmlStreamReader.getText();
-                            bankNameAction = new RecursiveTask<String>() {
-                                @Override
-                                protected String compute() {
-                                    return BankNameService.getInstance().findBankName(routingNumber);
-                                }
-                            };
-                            bankNameAction.fork();
+                            routingNumber = xmlStreamReader.getText();
                             routingNumberEntered = false;
                             routingNumberRead = true;
                         }
@@ -76,17 +70,26 @@ public class DLXMLParser {
                 event = xmlStreamReader.next();
             }
 
-            return CashFlow.CashFlowBuilder.build()
+//            final String finalRoutingNumber = routingNumber;
+//            bankNameAction = new RecursiveTask<String>() {
+//                @Override
+//                protected String compute() {
+//                    return BankNameService.getInstance().findBankName(finalRoutingNumber);
+//                }
+//            };
+//            bankNameAction.fork();
+            CashFlow cashFlowRes = CashFlow.CashFlowBuilder.build()
                     .withKey(cashFlow.getKey())
                     .withCashFlow((int) (cashFlowAmount + 0.5f))
-                    .withBankName(bankNameAction.join())
+                    .withBankName(/*bankNameAction.join()*/BankNameService.getInstance().findBankName(routingNumber))
                     .done();
+            System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
+            return cashFlowRes;
         } catch (XMLStreamException e) {
             e.printStackTrace();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
         return null;
     }
 
