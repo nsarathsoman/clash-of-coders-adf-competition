@@ -8,6 +8,7 @@ import java.util.Deque;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
+import hacker.helper.ExecutorHelper;
 import hacker.service.CashFlowService;
 import hacker.service.http.OkHttpClientHelper;
 import io.undertow.Undertow;
@@ -50,6 +51,10 @@ public class UndertowServer {
                     exchange.getResponseSender().send(resp);
                 }).build();
         server.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ExecutorHelper.onJVMShutdown();
+        }));
 
     }
 }
