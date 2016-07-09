@@ -1,18 +1,11 @@
 package hacker;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.RecursiveTask;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -24,14 +17,14 @@ public class StaxParser {
     private final String filePath;
     private final CashFlow cashFlow;
     private float cashFlowAmount = 0f;
-    private RecursiveAction bankNameAction;
+    private RecursiveTask<String> bankNameAction;
 
     public StaxParser(CashFlow cashFlow) {
         this.cashFlow = cashFlow;
         this.filePath = cashFlow.getDlFileName();
     }
 
-    public String parse() {
+    public CashFlow parse() {
         LocalTime startTime = LocalTime.now();
         boolean amount = false;
         boolean routingNumberEntered = false;
@@ -57,11 +50,12 @@ public class StaxParser {
                             amount = false;
                         }
                         if (routingNumberEntered) {
-                            bankNameAction = new RecursiveAction() {
+                            final String routingNumber = xmlStreamReader.getText();
+                            bankNameAction = new RecursiveTask<String>() {
                                 @Override
-                                protected void compute() {
+                                protected String compute() {
 //                                    cashFlow.setBankName("sas");
-                                    CashFlowService.getInstance().findBankName(xmlStreamReader.getText(), cashFlow);
+                                    return CashFlowService.getInstance().findBankName(routingNumber, cashFlow);
                                 }
                             };
                             bankNameAction.fork();
@@ -79,10 +73,10 @@ public class StaxParser {
                 event = xmlStreamReader.next();
             }
 
-            cashFlow.setCashFlow((int) (cashFlowAmount + 0.5f));
-            cashFlow.setCashFlowAdded(true);
-            bankNameAction.join();
-            return cashFlow.toString();
+//            cashFlow.setCashFlow((int) (cashFlowAmount + 0.5f));
+//            cashFlow.setCashFlowAdded(true);
+//            bankNameAction.join();
+            return CashFlow.CashFlowBuilder.builder().withKey(cashFlow.getKey()).withCashFlow((int) (cashFlowAmount + 0.5f)).withBankName(bankNameAction.join()).build();
         } catch (XMLStreamException e) {
             e.printStackTrace();
         } catch (FileNotFoundException e) {

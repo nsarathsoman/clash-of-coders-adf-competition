@@ -23,7 +23,8 @@ public class CashFlowService {
 
     private static final CashFlowService cashFlowService = new CashFlowService();
     private final CashFlowDAO cashFlowDAO = CashFlowDAO.getInstance();
-    private final List<ForkJoinTask<String>> forkJoinTasks = new ArrayList<>();
+    private final List<ForkJoinTask<CashFlow>> forkJoinTasks = new ArrayList<>();
+    private final List<CashFlow> cashFlowResults = new ArrayList<>();
 
     public static CashFlowService getInstance() {
         return cashFlowService;
@@ -35,9 +36,9 @@ public class CashFlowService {
         LocalTime startTime = LocalTime.now();
         List<CashFlow> cashFlows = cashFlowDAO.getCashFlowEntities(keys);
         for (CashFlow cashFlow : cashFlows) {
-            RecursiveTask<String> cashFlowRecursiveTask = new RecursiveTask<String>() {
+            RecursiveTask<CashFlow> cashFlowRecursiveTask = new RecursiveTask<CashFlow>() {
                 @Override
-                protected String compute() {
+                protected CashFlow compute() {
                     return new StaxParser(cashFlow).parse();
                 }
             };
@@ -49,8 +50,9 @@ public class CashFlowService {
         int size = cashFlows.size() -1 ;
         for (int i = 0; i <= size; i++) {
 //            CashFlow cashFlow = cashFlows.get(i);
-            String cashFlow = forkJoinTasks.get(i).join();
-            stringBuilder.append(cashFlow);
+            CashFlow cashFlow = forkJoinTasks.get(i).join();
+            cashFlowResults.add(cashFlow);
+            stringBuilder.append(cashFlow.toString());
             if (i != size) {
                 stringBuilder.append(",");
             }
@@ -66,26 +68,26 @@ public class CashFlowService {
 //            }
 //        }.fork();
         ExecutorHelper.execute(() -> {
-            OkHttpClientHelper.getInstance().postBankNameAndCashFlow(cashFlows);
-//            cashFlows.forEach(cashFlow -> CashFlowDAO.getInstance().updateBankNameAndCashFlow(cashFlows));
+//            OkHttpClientHelper.getInstance().postBankNameAndCashFlow(cashFlows);
+             CashFlowDAO.getInstance().updateBankNameAndCashFlow(cashFlowResults);
         });
         return stringBuilder.toString();
     }
 
 
-    public Future<String> findBankName(String routingNumber, CashFlow cashFlow) {
+    public String findBankName(String routingNumber, CashFlow cashFlow) {
 //        Future<String> bankNameFuture =  ExecutorHelper.submit(() -> {
 //        ExecutorHelper.execute(() -> {
             LocalTime startTime = LocalTime.now();
 //            String bankName = JDKHttpClientHelper.getInstance().getBankName(routingNumber);
             String bankName = OkHttpClientHelper.getInstance().getBankName(routingNumber);
-            cashFlow.setBankName(bankName);
-            cashFlow.setRecievedbankName(true);
+//            cashFlow.setBankName(bankName);
+//            cashFlow.setRecievedbankName(true);
             System.out.println("Bank API Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
 //            return bankName;
 //            Thread.yield();
 //        });
 //        return bankNameFuture;
-        return null;
+        return bankName;
     }
 }

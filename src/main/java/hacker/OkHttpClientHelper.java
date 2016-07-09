@@ -75,7 +75,7 @@ public class OkHttpClientHelper {
         Request request = null;
         try {
             request = new Request.Builder()
-                    .url("http://localhost:8889/")
+                    .url("http://dev-de1.adfdata.net:8889/")
                     .post(RequestBody.create(MediaType.parse("application/json"), new ObjectMapper().writeValueAsBytes(cashFlows)))
                     .build();
         } catch (JsonProcessingException e) {
