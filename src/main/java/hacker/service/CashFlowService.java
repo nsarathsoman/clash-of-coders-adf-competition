@@ -19,7 +19,6 @@ public class CashFlowService {
 
     private static final CashFlowService cashFlowService = new CashFlowService();
     private final CashFlowDAO cashFlowDAO = CashFlowDAO.getInstance();
-    private final List<ForkJoinTask<CashFlow>> forkJoinTasks = new ArrayList<>();
 
     public static CashFlowService getInstance() {
         return cashFlowService;
@@ -28,6 +27,7 @@ public class CashFlowService {
     private CashFlowService(){}
 
     public String process(List<String> keys) {
+        final List<ForkJoinTask<CashFlow>> forkJoinTasks = new ArrayList<>();
         LocalTime startTime = LocalTime.now();
         System.out.println("Processing " + keys.toString());
         List<CashFlow> cashFlows = cashFlowDAO.getCashFlowEntities(keys);
