@@ -4,11 +4,12 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
-import hacker.SaxParser;
 import hacker.dao.CashFlowDAO;
+import hacker.helper.ExecutorHelper;
 import hacker.model.CashFlow;
 import hacker.service.parser.DLXMLParser;
 import hacker.util.Pair;
@@ -28,28 +29,42 @@ public class CashFlowService {
     private CashFlowService(){}
 
     public Pair<String, List<CashFlow>> process(List<String> keys) {
-        final List<ForkJoinTask<CashFlow>> forkJoinTasks = new ArrayList<>();
+        final List<Future<CashFlow>> cashFlowFutures = new ArrayList<>();
         LocalTime startTime = LocalTime.now();
         System.out.println("Processing " + keys.toString());
         List<CashFlow> cashFlows = findCashFlows(keys);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch stopLatch = new CountDownLatch(keys.size());
         cashFlows.forEach(cashFlow -> {
-            RecursiveTask<CashFlow> cashFlowRecursiveTask = new RecursiveTask<CashFlow>() {
-                @Override
-                protected CashFlow compute() {
-//                    return DLXMLParser.getInstance().parse(cashFlow);
-                    return SaxParser.getInstance().parse(cashFlow);
-                }
-            };
-            forkJoinTasks.add(cashFlowRecursiveTask);
-            cashFlowRecursiveTask.fork();
+            Future<CashFlow> cashFlowFuture = ExecutorHelper.submit(() -> {
+                startLatch.await();
+                CashFlow cashFlowRs = DLXMLParser.getInstance().parse(cashFlow);
+                stopLatch.countDown();
+                return cashFlowRs;
+            });
+            cashFlowFutures.add(cashFlowFuture);
         });
+
+        startLatch.countDown();
+        try {
+            stopLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         final List<CashFlow> cashFlowResults = new ArrayList<>();
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("[");
         int size = cashFlows.size() -1 ;
         for (int i = 0; i <= size; i++) {
-            CashFlow cashFlow = forkJoinTasks.get(i).join();
+            CashFlow cashFlow = null;
+            try {
+                cashFlow = cashFlowFutures.get(i).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
 
             cashFlowResults.add(cashFlow);
             stringBuilder.append(cashFlow.toString());
