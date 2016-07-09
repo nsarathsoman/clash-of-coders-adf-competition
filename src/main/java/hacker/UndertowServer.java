@@ -5,6 +5,9 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveTask;
 
 import io.undertow.Undertow;
 import io.undertow.util.Headers;
@@ -16,6 +19,7 @@ public class UndertowServer {
 
     private static HikariConfig config;
     public static HikariDataSource hikariDataSource;
+    private static ForkJoinPool forkJoinPool = new ForkJoinPool();
 
     public static void main(final String[] args) {
         config = new HikariConfig();
@@ -47,7 +51,12 @@ public class UndertowServer {
                 .setHandler((exchange) -> {
                     Deque<String> keys = exchange.getQueryParameters().get("key");
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                    String resp = CashFlowService.getInstance().process(Arrays.asList(keys.getFirst().split(",")));
+                    String resp = forkJoinPool.invoke(new RecursiveTask<String>() {
+                        @Override
+                        protected String compute() {
+                            return CashFlowService.getInstance().process(Arrays.asList(keys.getFirst().split(",")));
+                        }
+                    });
                     exchange.getResponseSender().send(resp);
                 }).build();
         server.start();

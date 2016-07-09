@@ -128,13 +128,13 @@ public class CashFlowDAO {
 
     public void updateBankNameAndCashFlow(List<CashFlow> cashFlows) {
         LocalTime startTime = LocalTime.now();
-        PreparedStatement preparedStatement = null;
-        try (Connection connection = dataSource.getConnection()){connection.setAutoCommit(false);
-            connection.setAutoCommit(false);
-            String query = "update " + TABLE + " set "+ BANK_NAME +"=?, "+CASH_FLOW+"=? where `key` = ?;";
-            preparedStatement = connection.prepareStatement(query);
-            PreparedStatement finalPreparedStatement = preparedStatement;
-            cashFlows.forEach(cashFlow -> {
+        cashFlows.forEach(cashFlow -> {
+            PreparedStatement preparedStatement = null;
+            try (Connection connection = dataSource.getConnection()) {
+//                connection.setAutoCommit(false);
+                String query = "update " + TABLE + " set " + BANK_NAME + "=?, " + CASH_FLOW + "=? where `key` = ?;";
+                preparedStatement = connection.prepareStatement(query);
+                PreparedStatement finalPreparedStatement = preparedStatement;
                 try {
                     finalPreparedStatement.setString(1, cashFlow.getBankName());
                     finalPreparedStatement.setString(2, String.valueOf(cashFlow.getCashFlow()));
@@ -145,19 +145,19 @@ public class CashFlowDAO {
                     e.printStackTrace();
                 }
 
-            });
-            connection.commit();
-            preparedStatement.close();
-        } catch (SQLException e) {
-            if(null != preparedStatement) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e1) {
-                    e1.printStackTrace();
+//            connection.commit();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                if (null != preparedStatement) {
+                    try {
+                        preparedStatement.close();
+                    } catch (SQLException e1) {
+                        e1.printStackTrace();
+                    }
                 }
+                e.printStackTrace();
             }
-            e.printStackTrace();
-        }
+        });
         System.out.println("Persist BankName and CashFlow Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
     }
 }

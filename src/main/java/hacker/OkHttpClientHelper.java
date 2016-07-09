@@ -1,5 +1,6 @@
 package hacker;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -10,6 +11,10 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
@@ -21,8 +26,10 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.ConnectionPool;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
@@ -61,6 +68,28 @@ public class OkHttpClientHelper {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public void postBankNameAndCashFlow(List<CashFlow> cashFlows) {
+        LocalTime startTime = LocalTime.now();
+        Request request = null;
+        try {
+            request = new Request.Builder()
+                    .url("http://localhost:8889/")
+                    .post(RequestBody.create(MediaType.parse("application/json"), new ObjectMapper().writeValueAsBytes(cashFlows)))
+                    .build();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Persist BankName and CashFlow JSON Creation Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
+
+//        InputStream inputStream = null;
+        try (Response response = okClient.newCall(request).execute()) {
+            response.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Persist BankName and CashFlow API Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
     }
 
         private static OkHttpClient getUnsafeOkHttpClient() {

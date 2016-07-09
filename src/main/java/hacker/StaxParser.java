@@ -8,6 +8,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.RecursiveTask;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -22,13 +24,14 @@ public class StaxParser {
     private final String filePath;
     private final CashFlow cashFlow;
     private float cashFlowAmount = 0f;
+    private RecursiveAction bankNameAction;
 
     public StaxParser(CashFlow cashFlow) {
         this.cashFlow = cashFlow;
         this.filePath = cashFlow.getDlFileName();
     }
 
-    public void parse() {
+    public String parse() {
         LocalTime startTime = LocalTime.now();
         boolean amount = false;
         boolean routingNumberEntered = false;
@@ -42,7 +45,7 @@ public class StaxParser {
                     case XMLStreamConstants.START_ELEMENT: {
                         if("Amount".equals(xmlStreamReader.getLocalName())){
                             amount = true;
-                        } else if("RoutingNumberEntered".equals(xmlStreamReader.getLocalName())) {
+                        } else if(!routingNumberRead && "RoutingNumberEntered".equals(xmlStreamReader.getLocalName())) {
                             routingNumberEntered = true;
                         }
                         break;
@@ -54,8 +57,16 @@ public class StaxParser {
                             amount = false;
                         }
                         if (routingNumberEntered) {
-                            CashFlowService.getInstance().findBankName(xmlStreamReader.getText(), cashFlow);
+                            bankNameAction = new RecursiveAction() {
+                                @Override
+                                protected void compute() {
+//                                    cashFlow.setBankName("sas");
+                                    CashFlowService.getInstance().findBankName(xmlStreamReader.getText(), cashFlow);
+                                }
+                            };
+                            bankNameAction.fork();
                             routingNumberEntered = false;
+                            routingNumberRead = true;
                         }
                         break;
                     }
@@ -70,12 +81,15 @@ public class StaxParser {
 
             cashFlow.setCashFlow((int) (cashFlowAmount + 0.5f));
             cashFlow.setCashFlowAdded(true);
+            bankNameAction.join();
+            return cashFlow.toString();
         } catch (XMLStreamException e) {
             e.printStackTrace();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
+        return null;
     }
 
     public static void main(String[] args) {

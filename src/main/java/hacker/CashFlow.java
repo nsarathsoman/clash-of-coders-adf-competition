@@ -1,16 +1,22 @@
 package hacker;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Created by sarath on 7/4/16.
  */
 public class CashFlow {
 
     private String key;
+    @JsonIgnore
     private String dlFileName;
     private int cashFlow;
+    @JsonIgnore
     private boolean cashFlowAdded;
     private String bankName;
+    @JsonIgnore
     private String routingNumber;
+    @JsonIgnore
     private boolean recievedbankName;
 
     public String getKey() {
