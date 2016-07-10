@@ -50,13 +50,6 @@ public class UndertowServer {
                 .setHandler((exchange) -> {
                     final Deque<String> keys = exchange.getQueryParameters().get("key");
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-//                    Pair<String, List<CashFlow>> resp = forkJoinPool.invoke(new RecursiveTask<Pair<String, List<CashFlow>>>() {
-//                        @Override
-//                        protected Pair<String, List<CashFlow>> compute() {
-//                            return CashFlowService.getInstance().process(Arrays.asList(keys.getFirst().split(",")));
-//                        }
-//                    });
-//                    exchange.getResponseSender().send(resp.getLeft());
                     Pair<String, List<CashFlow>> resp = CashFlowService.getInstance().process(Arrays.asList(keys.getFirst().split(",")));
                     exchange.getResponseSender().send(resp.getLeft());
                     ExecutorHelper.execute(() -> {

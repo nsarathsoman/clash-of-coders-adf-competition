@@ -12,6 +12,7 @@ import hacker.dao.CashFlowDAO;
 import hacker.helper.ExecutorHelper;
 import hacker.model.CashFlow;
 import hacker.service.parser.DLXMLParser;
+import hacker.service.parser.SaxParser;
 import hacker.util.Pair;
 
 /**
@@ -29,21 +30,29 @@ public class CashFlowService {
     private CashFlowService(){}
 
     public Pair<String, List<CashFlow>> process(List<String> keys) {
-        final List<Future<CashFlow>> cashFlowFutures = new ArrayList<>();
+        final List<Future<Pair<CashFlow, Future<String>>>> cashFlowFutures = new ArrayList<>();
         LocalTime startTime = LocalTime.now();
         System.out.println("Processing " + keys.toString());
         List<CashFlow> cashFlows = findCashFlows(keys);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch stopLatch = new CountDownLatch(keys.size());
         cashFlows.forEach(cashFlow -> {
-            Future<CashFlow> cashFlowFuture = ExecutorHelper.submit(() -> {
+            Future<Pair<CashFlow, Future<String>>> cashFlowFuture = ExecutorHelper.submit(() -> {
                 startLatch.await();
-                CashFlow cashFlowRs = DLXMLParser.getInstance().parse(cashFlow);
+                Pair<CashFlow, Future<String>> resPair = DLXMLParser.getInstance().parse(cashFlow);
+//                CashFlow resPair = SaxParser.getInstance().parse(cashFlow);
                 stopLatch.countDown();
-                return cashFlowRs;
+                return resPair;
             });
             cashFlowFutures.add(cashFlowFuture);
         });
+
+        final List<CashFlow> cashFlowResults = new ArrayList<>();
+//        cashFlows.parallelStream().forEach(cashFlow -> {
+//            CashFlow cashFlowRs = DLXMLParser.getInstance().parse(cashFlow);
+////            CashFlow cashFlowRs = SaxParser.getInstance().parse(cashFlow);
+//            cashFlowResults.add(cashFlowRs);
+//        });
 
         startLatch.countDown();
         try {
@@ -52,14 +61,26 @@ public class CashFlowService {
             e.printStackTrace();
         }
 
-        final List<CashFlow> cashFlowResults = new ArrayList<>();
+        cashFlowFutures.stream().allMatch(pairFuture -> {
+            try {
+                return pairFuture.get().getRight().isDone();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+            return false;
+        });
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("[");
         int size = cashFlows.size() -1 ;
         for (int i = 0; i <= size; i++) {
             CashFlow cashFlow = null;
             try {
-                cashFlow = cashFlowFutures.get(i).get();
+                Pair<CashFlow, Future<String>> resPair = cashFlowFutures.get(i).get();
+                cashFlow = resPair.getLeft();
+                cashFlow.setBankName(resPair.getRight().get());
+//                cashFlow = cashFlowResults.get(i);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {

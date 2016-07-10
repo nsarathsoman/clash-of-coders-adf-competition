@@ -1,4 +1,4 @@
-package hacker;
+package hacker.service.parser;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -6,12 +6,14 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import hacker.model.CashFlow;
-import hacker.service.BankNameService;
+import hacker.util.ValueHolder;
 
 
 public class SaxParser {
@@ -28,15 +30,14 @@ public class SaxParser {
     public CashFlow parse(final CashFlow cashFlow) {
         final String filePath = cashFlow.getDlFileName();;
         LocalTime startTime = LocalTime.now();
+        final ValueHolder<String> routingNumberHolder = new ValueHolder<>();
+        final ValueHolder<Float> cashFlowHolder = new ValueHolder<>(0f);
         try {
 
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser saxParser = factory.newSAXParser();
 
-            final CashFlow cashFlowRes = new CashFlow();
             DefaultHandler handler = new DefaultHandler() {
-                public String routingNumber;
-                float cashFlowAmount = 0f;
                 boolean amount = false;
                 boolean routingNumberEntered = false;
                 boolean routingNumberRead = false;
@@ -59,13 +60,12 @@ public class SaxParser {
                 public void characters(char ch[], int start, int length) throws SAXException {
 
                     if (amount) {
-                        cashFlowAmount += Float.valueOf(new String(ch, start, length));
-                        cashFlowRes.setCashFlow((int) (cashFlowAmount + 0.5f));
+                        cashFlowHolder.setValue(cashFlowHolder.getValue() + Float.valueOf(new String(ch, start, length)));
+
                         amount = false;
                     }
                     if (routingNumberEntered) {
-                        routingNumber = new String(ch, start, length);
-                        cashFlowRes.setRoutingNumber(routingNumber);
+                        routingNumberHolder.setValue(new String(ch, start, length));
                         routingNumberEntered = false;
                         routingNumberRead = true;
                     }
@@ -75,13 +75,27 @@ public class SaxParser {
             };
 
             saxParser.parse(filePath, handler);
-            cashFlowRes.setBankName(/*BankNameService.getInstance().findBankName(cashFlowRes.getRoutingNumber())*/"DUMMY");
+            CashFlow cashFlowRes = CashFlow.CashFlowBuilder.build().withKey(cashFlow.getKey())
+                    .withCashFlow((int)(cashFlowHolder.getValue() + 0.5f))
+                    .withBankName(/*BankNameService.getInstance().findBankName(routingNumberHolder.getValue())*/"DUMMY")
+                    .done();
             System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
             return cashFlowRes;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return  null;
+    }
+
+    public static void main(String[] args) {
+        LocalTime total = LocalTime.now();
+        for(int i=0; i<10; i++) {
+            LocalTime startTime = LocalTime.now();
+            CashFlow cashFlow = CashFlow.CashFlowBuilder.build().withDLFileName("/home/sarath/Downloads/DLxml_3_amount check.xml").done();
+            new SaxParser().parse(cashFlow);
+            System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
+        }
+        System.out.println("Total Time Taken : " + ChronoUnit.MILLIS.between(total, LocalTime.now()));
     }
 
 }

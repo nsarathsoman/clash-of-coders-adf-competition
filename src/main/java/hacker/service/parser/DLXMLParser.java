@@ -4,7 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.Future;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -13,6 +13,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import hacker.model.CashFlow;
 import hacker.service.BankNameService;
+import hacker.util.Pair;
 
 
 public class DLXMLParser {
@@ -25,15 +26,15 @@ public class DLXMLParser {
         return DLXML_PARSER;
     }
 
-    public CashFlow parse(final CashFlow cashFlow) {
+    public Pair<CashFlow, Future<String>> parse(final CashFlow cashFlow) {
         final String filePath = cashFlow.getDlFileName();;
         float cashFlowAmount = 0f;
         String routingNumber = null;
-        RecursiveTask<String> bankNameAction = null;
         LocalTime startTime = LocalTime.now();
         boolean amount = false;
         boolean routingNumberEntered = false;
         boolean routingNumberRead = false;
+        Future<String> bankNameFuture = null;
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         try {
             XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(new FileReader(filePath));
@@ -56,6 +57,7 @@ public class DLXMLParser {
                         }
                         if (routingNumberEntered) {
                             routingNumber = xmlStreamReader.getText();
+                            bankNameFuture = BankNameService.getInstance().findBankName(routingNumber);
                             routingNumberEntered = false;
                             routingNumberRead = true;
                         }
@@ -81,13 +83,10 @@ public class DLXMLParser {
             CashFlow cashFlowRes = CashFlow.CashFlowBuilder.build()
                     .withKey(cashFlow.getKey())
                     .withCashFlow((int) (cashFlowAmount + 0.5f))
-                    .withBankName(/*bankNameAction.join()*/
-//                            BankNameService.getInstance().findBankName(routingNumber)
-                            "DUMMY"
-                    )
+//                    .withBankName(/*BankNameService.getInstance().findBankName(routingNumber)*/"DUmmy")
                     .done();
             System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
-            return cashFlowRes;
+            return new Pair<CashFlow, Future<String>>(cashFlowRes, bankNameFuture);
         } catch (XMLStreamException e) {
             e.printStackTrace();
         } catch (FileNotFoundException e) {
@@ -96,12 +95,16 @@ public class DLXMLParser {
         return null;
     }
 
-//    public static void main(String[] args) {
-//        LocalTime startTime = LocalTime.now();
-//        CashFlow cashFlow = CashFlow.CashFlowBuilder.build().withDLFileName("/home/sarath/Downloads/dlxmlCashFlowMonthlyOne-VE(1).xml").done();
-//        new DLXMLParser(cashFlow).parse();
-//        System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
-//    }
+    public static void main(String[] args) {
+        LocalTime total = LocalTime.now();
+        for(int i=0; i<10; i++) {
+            LocalTime startTime = LocalTime.now();
+            CashFlow cashFlow = CashFlow.CashFlowBuilder.build().withDLFileName("/home/sarath/Downloads/DLxml_3_amount check.xml").done();
+            new DLXMLParser().parse(cashFlow);
+            System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
+        }
+        System.out.println("Total Time Taken : " + ChronoUnit.MILLIS.between(total, LocalTime.now()));
+    }
 
 
     public int round(float num) {

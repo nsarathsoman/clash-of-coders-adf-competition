@@ -2,7 +2,10 @@ package hacker.service;
 
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.Future;
 
+import hacker.helper.ExecutorHelper;
+import hacker.model.CashFlow;
 import hacker.service.http.OkHttpClientHelper;
 
 /**
@@ -18,10 +21,14 @@ public class BankNameService {
         return bankNameService;
     }
 
-    public String findBankName(String routingNumber) {
-        LocalTime startTime = LocalTime.now();
-        String bankName = OkHttpClientHelper.getInstance().getBankName(routingNumber);
-        System.out.println("Bank API Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
-        return bankName;
+    public Future<String> findBankName(String routingNumber) {
+        return ExecutorHelper.submit(() -> {
+            LocalTime startTime = LocalTime.now();
+            String bankName = OkHttpClientHelper.getInstance().getBankName(routingNumber);
+//            Thread.sleep(1);
+//            String bankName = "DUMMY";
+            System.out.println("Bank API Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
+            return bankName;
+        });
     }
 }
