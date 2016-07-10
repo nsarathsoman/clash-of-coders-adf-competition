@@ -81,7 +81,10 @@ public class DLXMLParser {
             CashFlow cashFlowRes = CashFlow.CashFlowBuilder.build()
                     .withKey(cashFlow.getKey())
                     .withCashFlow((int) (cashFlowAmount + 0.5f))
-                    .withBankName(/*bankNameAction.join()*/BankNameService.getInstance().findBankName(routingNumber))
+                    .withBankName(/*bankNameAction.join()*/
+//                            BankNameService.getInstance().findBankName(routingNumber)
+                            "DUMMY"
+                    )
                     .done();
             System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
             return cashFlowRes;

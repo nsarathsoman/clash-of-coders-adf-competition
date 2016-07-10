@@ -4,14 +4,14 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
-import hacker.model.CashFlow;
-import hacker.helper.ExecutorHelper;
-import hacker.service.parser.DLXMLParser;
+import hacker.SaxParser;
 import hacker.dao.CashFlowDAO;
+import hacker.model.CashFlow;
+import hacker.service.parser.DLXMLParser;
+import hacker.util.Pair;
 
 /**
  * Created by sarath on 7/4/16.
@@ -27,7 +27,7 @@ public class CashFlowService {
 
     private CashFlowService(){}
 
-    public String process(List<String> keys) {
+    public Pair<String, List<CashFlow>> process(List<String> keys) {
         final List<ForkJoinTask<CashFlow>> forkJoinTasks = new ArrayList<>();
         LocalTime startTime = LocalTime.now();
         System.out.println("Processing " + keys.toString());
@@ -36,7 +36,8 @@ public class CashFlowService {
             RecursiveTask<CashFlow> cashFlowRecursiveTask = new RecursiveTask<CashFlow>() {
                 @Override
                 protected CashFlow compute() {
-                    return DLXMLParser.getInstance().parse(cashFlow);
+//                    return DLXMLParser.getInstance().parse(cashFlow);
+                    return SaxParser.getInstance().parse(cashFlow);
                 }
             };
             forkJoinTasks.add(cashFlowRecursiveTask);
@@ -59,19 +60,15 @@ public class CashFlowService {
         stringBuilder.append("]");
         System.out.println("Process Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now())+ "ms");
 
-        ExecutorHelper.execute(() -> {
-//            OkHttpClientHelper.getInstance().postBankNameAndCashFlow(cashFlows);
-             CashFlowDAO.getInstance().updateBankNameAndCashFlow(cashFlowResults);
-        });
-        return stringBuilder.toString();
+        return new Pair<>(stringBuilder.toString(), cashFlowResults);
     }
 
     private List<CashFlow> findCashFlows(List<String> keys) {
-        List<CashFlow> cashFlows = new ArrayList<>();
-        Map<String, CashFlow> cashFlowMap = cashFlowDAO.getCashFlowMap();
-        keys.forEach((key) -> cashFlows.add(cashFlowMap.get(key)));
-        return cashFlows;
-//        return cashFlowDAO.getCashFlows(keys);
+//        List<CashFlow> cashFlows = new ArrayList<>();
+//        Map<String, CashFlow> cashFlowMap = cashFlowDAO.getCashFlowMap();
+//        keys.forEach((key) -> cashFlows.add(cashFlowMap.get(key)));
+//        return cashFlows;
+        return cashFlowDAO.getCashFlows(keys);
     }
 
 }
