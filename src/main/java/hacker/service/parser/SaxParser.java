@@ -1,4 +1,4 @@
-package hacker;
+package hacker.service.parser;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -14,7 +14,7 @@ import hacker.model.CashFlow;
 import hacker.service.BankNameService;
 
 
-public class SaxParser {
+public class SaxParser implements Parser{
 
     private static final SaxParser saxParser = new SaxParser();
 
@@ -75,7 +75,8 @@ public class SaxParser {
             };
 
             saxParser.parse(filePath, handler);
-            cashFlowRes.setBankName(/*BankNameService.getInstance().findBankName(cashFlowRes.getRoutingNumber())*/"DUMMY");
+            cashFlowRes.setKey(cashFlow.getKey());
+            cashFlowRes.setBankName(BankNameService.getInstance().findBankName(cashFlowRes.getRoutingNumber()));
             System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
             return cashFlowRes;
         } catch (Exception e) {

@@ -15,14 +15,14 @@ import hacker.model.CashFlow;
 import hacker.service.BankNameService;
 
 
-public class DLXMLParser {
+public class StaxParser implements Parser{
 
-    private static final DLXMLParser DLXML_PARSER = new DLXMLParser();
+    private static final StaxParser STAX_PARSER = new StaxParser();
 
-    private DLXMLParser() {}
+    private StaxParser() {}
 
-    public static DLXMLParser getInstance() {
-        return DLXML_PARSER;
+    public static StaxParser getInstance() {
+        return STAX_PARSER;
     }
 
     public CashFlow parse(final CashFlow cashFlow) {
@@ -81,10 +81,7 @@ public class DLXMLParser {
             CashFlow cashFlowRes = CashFlow.CashFlowBuilder.build()
                     .withKey(cashFlow.getKey())
                     .withCashFlow((int) (cashFlowAmount + 0.5f))
-                    .withBankName(/*bankNameAction.join()*/
-//                            BankNameService.getInstance().findBankName(routingNumber)
-                            "DUMMY"
-                    )
+                    .withBankName(BankNameService.getInstance().findBankName(routingNumber))
                     .done();
             System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
             return cashFlowRes;
@@ -99,7 +96,7 @@ public class DLXMLParser {
 //    public static void main(String[] args) {
 //        LocalTime startTime = LocalTime.now();
 //        CashFlow cashFlow = CashFlow.CashFlowBuilder.build().withDLFileName("/home/sarath/Downloads/dlxmlCashFlowMonthlyOne-VE(1).xml").done();
-//        new DLXMLParser(cashFlow).parse();
+//        new StaxParser(cashFlow).parse();
 //        System.out.println("Time Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
 //    }
 

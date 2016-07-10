@@ -3,6 +3,8 @@ package hacker.service;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 
+import hacker.UndertowServer;
+import hacker.service.http.HttpClientFactory;
 import hacker.service.http.OkHttpClientHelper;
 
 /**
@@ -20,7 +22,7 @@ public class BankNameService {
 
     public String findBankName(String routingNumber) {
         LocalTime startTime = LocalTime.now();
-        String bankName = OkHttpClientHelper.getInstance().getBankName(routingNumber);
+        String bankName = HttpClientFactory.getHttpClient(UndertowServer.HTTP_CLIENT_TYPE).getBankName(routingNumber);
         System.out.println("Bank API Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
         return bankName;
     }

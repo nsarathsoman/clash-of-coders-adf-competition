@@ -30,7 +30,7 @@ import okhttp3.Response;
 /**
  * Created by sarath on 7/5/16.
  */
-public class OkHttpClientHelper {
+public class OkHttpClientHelper implements HttpClient {
 
     static {
         okClient = getUnsafeOkHttpClient();

@@ -140,8 +140,47 @@ public class CashFlowDAO {
 
     public void updateBankNameAndCashFlow(Collection<CashFlow> cashFlows) {
         LocalTime startTime = LocalTime.now();
-        cashFlows.forEach((cashFlow)-> updateBankNameAndCashFlow(cashFlow));
+//        cashFlows.forEach((cashFlow)-> updateBankNameAndCashFlow(cashFlow));
+        updateBankNameAndCashFlowInBatch(cashFlows);
         System.out.println("Persist BankName and CashFlow Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
+    }
+
+
+    private void updateBankNameAndCashFlowInBatch(Collection<CashFlow> cashFlows) {
+        LocalTime startTime = LocalTime.now();
+        PreparedStatement preparedStatement = null;
+        try (Connection connection = dataSource.getConnection()) {
+//            connection.setAutoCommit(false);
+            String query = "update " + TABLE + " set " + BANK_NAME + "=?, " + CASH_FLOW + "=? where `key` = ?;";
+            preparedStatement = connection.prepareStatement(query);
+            PreparedStatement finalPreparedStatement = preparedStatement;
+            cashFlows.forEach(cashFlow -> {
+                System.out.println("Persiting cashflow :" + cashFlow.getCashFlow() + " " + cashFlow.getBankName());
+                try {
+                    finalPreparedStatement.setString(1, cashFlow.getBankName());
+                    finalPreparedStatement.setString(2, String.valueOf(cashFlow.getCashFlow()));
+                    finalPreparedStatement.setString(3, cashFlow.getKey());
+//                    finalPreparedStatement.executeUpdate();
+                    finalPreparedStatement.addBatch();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+            int[] rowsAffected = finalPreparedStatement.executeBatch();
+//            connection.commit();
+            System.out.print("Batch update. Rows affected " + rowsAffected.length);
+            System.out.println("Persist BankName and CashFlow Time : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()) + "ms");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if(null != preparedStatement) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public void updateBankNameAndCashFlow(final CashFlow cashFlow) {
@@ -150,7 +189,7 @@ public class CashFlowDAO {
 //            connection.setAutoCommit(false);
             String query = "update " + TABLE + " set " + BANK_NAME + "=?, " + CASH_FLOW + "=? where `key` = ?;";
             preparedStatement = connection.prepareStatement(query);
-//                System.out.println("Persiting cashflow :" + cashFlow.getCashFlow() + " " + cashFlow.getBankName());
+                System.out.println("Persiting cashflow :" + cashFlow.getCashFlow() + " " + cashFlow.getBankName());
             try {
                 preparedStatement.setString(1, cashFlow.getBankName());
                 preparedStatement.setString(2, String.valueOf(cashFlow.getCashFlow()));

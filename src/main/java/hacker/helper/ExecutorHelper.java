@@ -16,10 +16,10 @@ import java.util.concurrent.TimeUnit;
 
 public class ExecutorHelper {
 
-    private static final ExecutorService executorService = new ThreadPoolExecutor(50, Integer.MAX_VALUE,
-            60L, TimeUnit.SECONDS,
-            new SynchronousQueue<Runnable>());
-//    private static final ExecutorService executorService = Executors.newFixedThreadPool(20);
+//    private static final ExecutorService executorService = new ThreadPoolExecutor(20, Integer.MAX_VALUE,
+//            60L, TimeUnit.SECONDS,
+//            new SynchronousQueue<Runnable>());
+    private static ExecutorService executorService = null;
 //    private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public static void execute(Runnable runnable) {
@@ -33,6 +33,10 @@ public class ExecutorHelper {
     public static void onJVMShutdown() {
         System.out.println("Shutting down executor service.");
         executorService.shutdown();
+    }
+
+    public static void initialize(int noOfThreads) {
+        executorService = Executors.newFixedThreadPool(noOfThreads);
     }
 
 }

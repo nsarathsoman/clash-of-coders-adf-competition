@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
-import hacker.SaxParser;
+import hacker.UndertowServer;
 import hacker.dao.CashFlowDAO;
 import hacker.model.CashFlow;
-import hacker.service.parser.DLXMLParser;
+import hacker.service.parser.ParsingStrategy;
 import hacker.util.Pair;
 
 /**
@@ -36,8 +36,7 @@ public class CashFlowService {
             RecursiveTask<CashFlow> cashFlowRecursiveTask = new RecursiveTask<CashFlow>() {
                 @Override
                 protected CashFlow compute() {
-//                    return DLXMLParser.getInstance().parse(cashFlow);
-                    return SaxParser.getInstance().parse(cashFlow);
+                    return ParsingStrategy.findParser(UndertowServer.PARSER_TYPE).parse(cashFlow);
                 }
             };
             forkJoinTasks.add(cashFlowRecursiveTask);
