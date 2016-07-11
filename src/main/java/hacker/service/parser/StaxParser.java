@@ -27,13 +27,14 @@ public class StaxParser implements Parser{
 
     public CashFlow parse(final CashFlow cashFlow) {
         final String filePath = cashFlow.getDlFileName();;
-        float cashFlowAmount = 0f;
+        double cashFlowAmount = 0f;
         String routingNumber = null;
         RecursiveTask<String> bankNameAction = null;
         LocalTime startTime = LocalTime.now();
         boolean amount = false;
         boolean routingNumberEntered = false;
         boolean routingNumberRead = false;
+        boolean transactionSummaryRead = false;
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         try {
             XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(new FileReader(filePath));
@@ -41,7 +42,10 @@ public class StaxParser implements Parser{
             while (true) {
                 switch (event){
                     case XMLStreamConstants.START_ELEMENT: {
-                        if("Amount".equals(xmlStreamReader.getLocalName())){
+                        if("TransactionSummary4".equals(xmlStreamReader.getLocalName())){
+                            transactionSummaryRead = true;
+                        }
+                        if(transactionSummaryRead && "Amount".equals(xmlStreamReader.getLocalName())){
                             amount = true;
                         } else if(!routingNumberRead && "RoutingNumberEntered".equals(xmlStreamReader.getLocalName())) {
                             routingNumberEntered = true;
@@ -51,8 +55,9 @@ public class StaxParser implements Parser{
 
                     case XMLStreamConstants.CHARACTERS: {
                         if (amount) {
-                            cashFlowAmount += Float.valueOf(xmlStreamReader.getText());
+                            cashFlowAmount += Double.valueOf(xmlStreamReader.getText());
                             amount = false;
+                            transactionSummaryRead = false;
                         }
                         if (routingNumberEntered) {
                             routingNumber = xmlStreamReader.getText();
@@ -80,7 +85,7 @@ public class StaxParser implements Parser{
 //            bankNameAction.fork();
             CashFlow cashFlowRes = CashFlow.CashFlowBuilder.build()
                     .withKey(cashFlow.getKey())
-                    .withCashFlow((int) (cashFlowAmount + 0.5f))
+                    .withCashFlow((int)Math.ceil(cashFlowAmount))
                     .withBankName(BankNameService.getInstance().findBankName(routingNumber))
                     .done();
             System.out.println("XML Procesing Taken : " + ChronoUnit.MILLIS.between(startTime, LocalTime.now()));
