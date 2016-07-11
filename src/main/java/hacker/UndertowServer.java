@@ -52,5 +52,8 @@ public class UndertowServer {
                 }).build();
         server.start();
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ExecutorHelper.onJVMShutDown();
+        }));
     }
 }

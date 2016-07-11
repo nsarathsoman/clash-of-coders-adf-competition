@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ExecutorHelper {
 
-    private static final ExecutorService executorService = new ThreadPoolExecutor(100, Integer.MAX_VALUE,
+    private static final ExecutorService executorService = new ThreadPoolExecutor(200, Integer.MAX_VALUE,
             60L, TimeUnit.SECONDS,
             new SynchronousQueue<Runnable>());
 
@@ -27,8 +27,8 @@ public class ExecutorHelper {
         return executorService.submit(callable);
     }
 
-    @Override
-    protected void finalize() throws Throwable {
+    public static void onJVMShutDown() {
+        System.out.println("Shutting down executor service.");
         executorService.shutdown();
     }
 }
